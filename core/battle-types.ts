@@ -70,6 +70,7 @@ export interface Battle {
   place: Place
   attacker: Participant
   defender: Participant
+  onlyFirstRound?: boolean
 }
 
 export interface Participant {
@@ -92,6 +93,7 @@ export interface BattleInstance {
   attacker: ParticipantInstance
   defender: ParticipantInstance
   roundNumber: number
+  onlyFirstRound?: boolean
 }
 
 export interface ParticipantInstance {
@@ -155,6 +157,7 @@ export enum BattleWinner {
   attacker = 'attacker',
   draw = 'draw',
   defender = 'defender',
+  unknown = 'unknown',
 }
 
 // things that set combat to an absolute value should be done early, so high priority

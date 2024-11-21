@@ -2,7 +2,7 @@ import Head from 'next/head'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { BattleReport } from '../core'
 import { Battle, Participant } from '../core/battle-types'
-import { createParticipant } from '../core/battleSetup'
+import { createParticipant, getUnitMap } from '../core/battleSetup'
 import { Faction, Place } from '../core/enums'
 import { UnitType } from '../core/unit'
 import SwitchButton from '../component/switchButton'
@@ -29,6 +29,8 @@ import {
 } from '../util/query-params'
 import { GetServerSideProps } from 'next'
 import styles from './index.module.scss'
+import { getRandomBattleResult } from '../util/get-battle-result'
+import { getUnitFromUnitString } from '../core/battleResult'
 
 // TODO add resource value
 
@@ -51,10 +53,14 @@ export default function Home(props: HomeProps) {
     return createParticipant('defender', undefined, props.query)
   })
   const [battleReport, setBattleReport] = useState<BattleReport>()
+  const [battleResult, setBattleResult] = useState<string | undefined>()
 
   const [place, setPlaceRaw] = useState<Place>(() => {
     return props.query.place === Place.ground ? Place.ground : Place.space
   })
+
+  // eslint-disable-next-line
+  const [onlyFirstRound, setOnlyFirstRound] = useState(() => !!props.query.oneRound)
 
   const [error, setError] = useState(false)
 
@@ -82,7 +88,7 @@ export default function Home(props: HomeProps) {
       setTouched(true)
     }
     setAttackerRaw(p)
-    createQueryParams(p, defender, place)
+    createQueryParams(p, defender, place, onlyFirstRound)
   }
   const setDefender = (p: Participant) => {
     if (!touched) {
@@ -90,12 +96,66 @@ export default function Home(props: HomeProps) {
       setTouched(true)
     }
     setDefenderRaw(p)
-    createQueryParams(attacker, p, place)
+    createQueryParams(attacker, p, place, onlyFirstRound)
   }
 
   const setPlace = (newPlace: Place) => {
     setPlaceRaw(newPlace)
-    createQueryParams(attacker, defender, newPlace)
+    createQueryParams(attacker, defender, newPlace, onlyFirstRound)
+  }
+
+  const onSetBattle = (units: string) => {
+    const [winner, unitString] = units.split(':')
+
+    switch (winner) {
+      case 'draw':
+        setAttacker({
+          ...attacker,
+          units: getUnitMap(),
+          damagedUnits: {},
+        })
+        setDefender({
+          ...defender,
+          units: getUnitMap(),
+          damagedUnits: {},
+        })
+        break
+      case 'attacker': {
+        setAttacker({
+          ...attacker,
+          ...getUnitFromUnitString(unitString),
+        })
+        setDefender({
+          ...defender,
+          units: getUnitMap(),
+          damagedUnits: {},
+        })
+        break
+      }
+      case 'defender': {
+        setDefender({
+          ...defender,
+          ...getUnitFromUnitString(unitString),
+        })
+        setAttacker({
+          ...attacker,
+          units: getUnitMap(),
+          damagedUnits: {},
+        })
+        break
+      }
+      case 'unknown': {
+        const [attackerUnits, defenderUnits] = unitString.split(';')
+        setAttacker({
+          ...attacker,
+          ...getUnitFromUnitString(attackerUnits),
+        })
+        setDefender({
+          ...defender,
+          ...getUnitFromUnitString(defenderUnits),
+        })
+      }
+    }
   }
 
   // Load the worker only to cache it
@@ -131,10 +191,11 @@ export default function Home(props: HomeProps) {
         attacker,
         defender,
         place,
+        onlyFirstRound,
       }
       worker.postMessage(battle)
     }
-  }, [touched, attacker, defender, place, error])
+  }, [touched, attacker, defender, place, error, onlyFirstRound])
 
   useEffect(() => {
     if (touched) {
@@ -304,6 +365,7 @@ export default function Home(props: HomeProps) {
                   onLeftClick={() => setPlace(Place.space)}
                   onRightClick={() => setPlace(Place.ground)}
                 />
+
                 <div style={{ flex: '1 0 0' }} />
                 <CoolButton
                   className={styles.clearButton}
@@ -318,6 +380,37 @@ export default function Home(props: HomeProps) {
                 <div style={{ flex: '1 0 0' }} />
               </div>
             </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '20px',
+              }}
+            >
+              <div style={{ flex: '3 0 0' }} />
+              <SwitchButton
+                isLeftSelected={onlyFirstRound === true}
+                leftLabel="1 round"
+                rightLabel="Till end"
+                onLeftClick={() => {
+                  setOnlyFirstRound(true)
+                  createQueryParams(attacker, defender, place, true)
+                }}
+                onRightClick={() => {
+                  setOnlyFirstRound(false)
+                  createQueryParams(attacker, defender, place, false)
+                }}
+              />
+              <div style={{ flex: '1 0 0' }} />
+              <CoolButton
+                className={styles.clearButton}
+                onClick={() => setBattleResult(getRandomBattleResult(battleReport))}
+              >
+                <span className={styles.shortText}>Battle!</span>
+                <span className={styles.longText}>Battle!</span>
+              </CoolButton>
+              <div style={{ flex: '3 0 0' }} />
+            </div>
           </div>
           <BattleReportView
             report={battleReport}
@@ -329,6 +422,8 @@ export default function Home(props: HomeProps) {
           />
           <DetailedBattleReportView
             report={battleReport}
+            result={battleResult}
+            onSetBattle={onSetBattle}
             style={{
               marginTop: '20px',
               marginBottom: '20px',

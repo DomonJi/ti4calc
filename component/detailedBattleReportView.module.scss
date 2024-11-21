@@ -13,6 +13,16 @@
     flex: 1 0 auto;
   }
 
+  > .attackerString {
+    flex: 1 0 auto;
+    background: #b1b1ff;
+  }
+
+  > .defenderString {
+    flex: 1 0 auto;
+    background: #ffb1b1;
+  }
+
   > * {
     text-align: center;
     white-space: pre-wrap;

@@ -113,6 +113,11 @@ export function doBattle(battle: BattleInstance): BattleResult {
         winner: BattleWinner.draw,
         units: '',
       }
+    } else if (battle.onlyFirstRound) {
+      battleResult = {
+        winner: BattleWinner.unknown,
+        units: `${getBattleResultUnitString(battle.attacker)};${getBattleResultUnitString(battle.defender)}`,
+      }
     }
   }
 
@@ -121,7 +126,7 @@ export function doBattle(battle: BattleInstance): BattleResult {
     logWrapper('Attacker won')
   } else if (battleResult.winner === BattleWinner.defender) {
     logWrapper('Defender won')
-  } else {
+  } else if (battleResult.winner === BattleWinner.draw) {
     logWrapper('Battle ended in a draw')
   }
 

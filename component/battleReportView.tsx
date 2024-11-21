@@ -15,15 +15,16 @@ export function BattleReportView({ report, style }: Props) {
       defender: 0,
       draw: 1,
       defenderSurvivers: {},
+      unknown: 0,
+      unknownSurvivers: {},
     }
   }
 
-  const total = report.attacker + report.defender + report.draw
+  const total = report.attacker + report.defender + report.draw + report.unknown
 
   return (
     <div
       style={{
-        position: 'sticky',
         top: 0,
         bottom: 0,
         display: 'flex',
@@ -60,6 +61,20 @@ export function BattleReportView({ report, style }: Props) {
             <>
               <div>Attacker</div>
               <div>{toPercentageString(total, report.attacker)}</div>
+            </>
+          )}
+        </div>
+        <div
+          className={styles.percentage}
+          style={{
+            flex: `${toPercentageNumber(total, report.unknown)} 0 0`,
+            background: '#CFCFCF',
+          }}
+        >
+          {report.unknown !== 0 && (
+            <>
+              <div>Unkown</div>
+              <div>{toPercentageString(total, report.unknown)}</div>
             </>
           )}
         </div>

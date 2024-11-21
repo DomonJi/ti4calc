@@ -1,4 +1,5 @@
 import { ParticipantInstance } from './battle-types'
+import { getUnitMap } from './battleSetup'
 import { UnitInstance, UnitType } from './unit'
 
 export function getBattleResultUnitString(p: ParticipantInstance) {
@@ -22,6 +23,26 @@ export function getBattleResultUnitString(p: ParticipantInstance) {
       }
     })
     .join('')
+}
+
+export function getUnitFromUnitString(unitString: string) {
+  const units = getUnitMap()
+  const damagedUnits = getUnitMap()
+  let lastUnit: UnitType = UnitType.other
+  for (const char of unitString || '') {
+    if (char === '-') {
+      damagedUnits[lastUnit] += 1
+      continue
+    }
+    const unitType = getUnit(char)
+    lastUnit = unitType
+    units[unitType] += 1
+  }
+
+  return {
+    units,
+    damagedUnits,
+  }
 }
 
 function getChar(u: UnitInstance): string {
@@ -48,5 +69,32 @@ function getChar(u: UnitInstance): string {
       return 'p'
     case UnitType.other:
       return 'o' // should never happen
+  }
+}
+
+function getUnit(char: string): UnitType {
+  switch (char) {
+    case 'F':
+      return UnitType.flagship
+    case 'W':
+      return UnitType.warsun
+    case 'D':
+      return UnitType.dreadnought
+    case 'C':
+      return UnitType.carrier
+    case 'c':
+      return UnitType.cruiser
+    case 'd':
+      return UnitType.destroyer
+    case 'f':
+      return UnitType.fighter
+    case 'M':
+      return UnitType.mech
+    case 'i':
+      return UnitType.infantry
+    case 'p':
+      return UnitType.pds
+    default:
+      return UnitType.other
   }
 }

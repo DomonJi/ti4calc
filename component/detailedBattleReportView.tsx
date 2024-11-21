@@ -16,6 +16,8 @@ import CoolButton from './coolButton'
 interface Props {
   report: BattleReport | undefined
   style?: React.CSSProperties
+  result?: string
+  onSetBattle: (units: string) => void
 }
 
 const PREFERRED_SORT_ORDER_OF_UNITS = ['F', 'W', 'D', 'C', 'c', 'd', 'f', 'M', 'i', 'p']
@@ -97,7 +99,7 @@ const formatUnitString = (unitString: string) => {
   return result.substring(1) // remove leading newline
 }
 
-export function DetailedBattleReportView({ report, style }: Props) {
+export function DetailedBattleReportView({ report, style, result, onSetBattle }: Props) {
   if (!report) {
     report = {
       attacker: 0,
@@ -105,13 +107,15 @@ export function DetailedBattleReportView({ report, style }: Props) {
       defender: 0,
       draw: 1,
       defenderSurvivers: {},
+      unknownSurvivers: {},
+      unknown: 0,
     }
   }
 
-  const total = report.attacker + report.defender + report.draw
+  const total = report.attacker + report.defender + report.draw + report.unknown
 
   const [touched, setTouched] = useState(false)
-  const [show, setShowRaw] = useState(false)
+  const [show, setShowRaw] = useState(true)
 
   const setShow = (newShowValue: boolean) => {
     if (!touched) {
@@ -217,6 +221,7 @@ export function DetailedBattleReportView({ report, style }: Props) {
           <div className={styles.battleReport}>
             {sortUnitStrings(objectEntries(report.attackerSurvivers)).map(
               ([units, count], index) => {
+                const isWinner = result === `attacker:${units}`
                 return (
                   <div
                     key={`attacker-${units}`}
@@ -224,7 +229,9 @@ export function DetailedBattleReportView({ report, style }: Props) {
                     style={{
                       flex: `${toPercentageNumber(total, count)} 0 0`,
                       background: attackerColors[index],
+                      border: isWinner ? '2px solid yellow' : 'unset',
                     }}
+                    onDoubleClick={() => onSetBattle(`attacker:${units}`)}
                   >
                     <div className={styles.unitString}>{formatUnitString(units)}</div>
                     <div>{toPercentageString(total, count)}</div>
@@ -232,13 +239,35 @@ export function DetailedBattleReportView({ report, style }: Props) {
                 )
               },
             )}
+            {objectEntries(report.unknownSurvivers).map(([units, count]) => {
+              const [attackerUnits, defenderUnits] = units.split(';')
+              const isWinner = result === `unknown:${units}`
+              return (
+                <div
+                  key={`unknown-${units}`}
+                  className={styles.percentage}
+                  style={{
+                    flex: `${toPercentageNumber(total, report.unknown)} 0 0`,
+                    background: '#CFCFCF',
+                    border: isWinner ? '2px solid yellow' : 'unset',
+                  }}
+                  onDoubleClick={() => onSetBattle(`unknown:${units}`)}
+                >
+                  <div className={styles.attackerString}>{formatUnitString(attackerUnits)}</div>
+                  <div className={styles.defenderString}>{formatUnitString(defenderUnits)}</div>
+                  <div>{toPercentageString(total, count)}</div>
+                </div>
+              )
+            })}
             <div
               key="draw"
               className={styles.percentage}
               style={{
                 flex: `${toPercentageNumber(total, report.draw)} 0 0`,
                 background: '#CFCFCF',
+                border: result === 'draw' ? '2px solid yellow' : 'unset',
               }}
+              onDoubleClick={() => onSetBattle(`draw`)}
             >
               <div className={styles.unitString}>-</div>
               <div>{toPercentageString(total, report.draw)}</div>
@@ -246,6 +275,7 @@ export function DetailedBattleReportView({ report, style }: Props) {
             {sortUnitStrings(objectEntries(report.defenderSurvivers))
               .reverse()
               .map(([units, count], index) => {
+                const isWinner = result === `defender:${units}`
                 return (
                   <div
                     key={`defender-${units}`}
@@ -253,7 +283,9 @@ export function DetailedBattleReportView({ report, style }: Props) {
                     style={{
                       flex: `${toPercentageNumber(total, count)} 0 0`,
                       background: defenderColors[index],
+                      border: isWinner ? '2px solid yellow' : 'unset',
                     }}
+                    onDoubleClick={() => onSetBattle(`defender:${units}`)}
                   >
                     <div className={styles.unitString}>{formatUnitString(units)}</div>
                     <div>{toPercentageString(total, count)}</div>

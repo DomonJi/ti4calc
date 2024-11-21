@@ -62,6 +62,7 @@ function createBattleInstance(battle: Battle): BattleInstance {
     attacker,
     defender,
     roundNumber: 1,
+    onlyFirstRound: battle.onlyFirstRound,
   }
 }
 

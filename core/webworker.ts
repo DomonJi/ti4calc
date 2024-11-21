@@ -31,6 +31,8 @@ function doWork(battle: Battle) {
     draw: 0,
     defender: 0,
     defenderSurvivers: {},
+    unknownSurvivers: {},
+    unknown: 0,
   }
 
   const parts = Math.ceil(NUMBER_OF_ROLLS / ROLLS_BETWEEN_UI_UPDATE)
@@ -47,6 +49,10 @@ function doWork(battle: Battle) {
     finalData.defender += partialData.defender
     for (const [units, count] of objectEntries(partialData.defenderSurvivers)) {
       finalData.defenderSurvivers[units] = (finalData.defenderSurvivers[units] ?? 0) + count
+    }
+    finalData.unknown += partialData.unknown
+    for (const [units, count] of objectEntries(partialData.unknownSurvivers)) {
+      finalData.unknownSurvivers[units] = (finalData.unknownSurvivers[units] ?? 0) + count
     }
     const currentTime = new Date().getTime()
     const lastIteration = parts === index
@@ -69,6 +75,8 @@ function getPartialReport(battleInstance: BattleInstance, times: number) {
     draw: 0,
     defender: 0,
     defenderSurvivers: {},
+    unknownSurvivers: {},
+    unknown: 0,
   }
   _times(times, () => {
     const tmp = _cloneDeep(battleInstance)
@@ -93,6 +101,15 @@ function getPartialReport(battleInstance: BattleInstance, times: number) {
           data.defenderSurvivers[result.units]! += 1
         }
         break
+      case BattleWinner.unknown: {
+        data.unknown += 1
+        if (data.unknownSurvivers[result.units] === undefined) {
+          data.unknownSurvivers[result.units] = 1
+        } else {
+          data.unknownSurvivers[result.units]! += 1
+        }
+        break
+      }
     }
   })
   return data

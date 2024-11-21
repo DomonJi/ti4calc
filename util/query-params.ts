@@ -6,7 +6,12 @@ import { objectEntries } from './util-object'
 
 const allBattleEffects = getAllBattleEffects()
 
-export function createQueryParams(attacker: Participant, defender: Participant, place: Place) {
+export function createQueryParams(
+  attacker: Participant,
+  defender: Participant,
+  place: Place,
+  oneRound: boolean,
+) {
   const params = new URLSearchParams()
 
   addParticipant(params, attacker)
@@ -16,11 +21,15 @@ export function createQueryParams(attacker: Participant, defender: Participant, 
     params.set('place', place)
   }
 
+  if (oneRound) {
+    params.set('oneRound', '1')
+  }
+
   if (hasUnits(attacker) || hasUnits(defender)) {
     const paramsNonEmpty = params.toString().length > 0
-    window.history.replaceState({}, '', `${location.pathname}${paramsNonEmpty ? '?' : ''}${params}`)
+    window.history.pushState({}, '', `${location.pathname}${paramsNonEmpty ? '?' : ''}${params}`)
   } else {
-    window.history.replaceState({}, '', location.pathname)
+    window.history.pushState({}, '', location.pathname)
   }
 }
 

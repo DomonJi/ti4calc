@@ -11,6 +11,9 @@ export interface BattleReport {
   draw: number
   defender: number
   defenderSurvivers: PartialRecord<string, number>
+  unknownSurvivers: PartialRecord<string, number>
+  unknown: number
+  result?: string
 }
 
 export default function getBattleReport(
@@ -35,6 +38,8 @@ export default function getBattleReport(
     draw: 0,
     defender: 0,
     defenderSurvivers: {},
+    unknownSurvivers: {},
+    unknown: 0,
   }
 
   const battleInstance = setupBattle(battle)
